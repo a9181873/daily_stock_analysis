@@ -123,7 +123,7 @@ class YfinanceFetcher(BaseFetcher):
             return f"{hk_code}.HK"
 
         # 已经包含后缀的情况
-        if '.SS' in code or '.SZ' in code or '.HK' in code or '.BJ' in code:
+        if '.SS' in code or '.SZ' in code or '.HK' in code or '.BJ' in code or '.TW' in code or '.TWO' in code:
             return code
 
         # 去除可能的 .SH 后缀
@@ -639,9 +639,11 @@ class YfinanceFetcher(BaseFetcher):
                 index_name=index_name,
             )
 
-        # 仅处理美股股票
-        if not self._is_us_stock(stock_code):
-            logger.debug(f"[Yfinance] {stock_code} 不是美股，跳过")
+        # 仅处理美股与台股
+        from .base import _is_tw_market
+        is_tw = _is_tw_market(stock_code)
+        if not self._is_us_stock(stock_code) and not is_tw:
+            logger.debug(f"[Yfinance] {stock_code} 不是美股或台股，跳过")
             return None
 
         try:
@@ -670,7 +672,7 @@ class YfinanceFetcher(BaseFetcher):
                 hist = ticker.history(period='2d')
                 if hist.empty:
                     logger.warning(f"[Yfinance] 无法获取 {symbol} 的数据，尝试 Stooq 兜底")
-                    return self._get_us_stock_quote_from_stooq(symbol)
+                    return self._get_us_stock_quote_from_stooq(symbol) if not is_tw else None
 
                 today = hist.iloc[-1]
                 prev = hist.iloc[-2] if len(hist) > 1 else today
@@ -728,8 +730,8 @@ class YfinanceFetcher(BaseFetcher):
             return quote
 
         except Exception as e:
-            logger.warning(f"[Yfinance] 获取美股 {stock_code} 实时行情失败: {e}，尝试 Stooq 兜底")
-            return self._get_us_stock_quote_from_stooq(stock_code)
+            logger.warning(f"[Yfinance] 获取 {stock_code} 实时行情失败: {e}，尝试 Stooq 兜底")
+            return self._get_us_stock_quote_from_stooq(stock_code) if not is_tw else None
 
 
 if __name__ == "__main__":

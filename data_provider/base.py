@@ -110,6 +110,8 @@ def normalize_stock_code(stock_code: str) -> str:
         base, suffix = code.rsplit('.', 1)
         if suffix.upper() == 'HK' and base.isdigit() and 1 <= len(base) <= 5:
             return f"HK{base.zfill(5)}"
+        if suffix.upper() in ('TW', 'TWO'):
+            return code
         if suffix.upper() in ('SH', 'SZ', 'SS', 'BJ') and base.isdigit():
             return base
 
@@ -145,6 +147,12 @@ def _is_hk_market(code: str) -> bool:
     return False
 
 
+def _is_tw_market(code: str) -> bool:
+    """判定是否為台股代碼 (例如 2330.TW 或 3105.TWO)。"""
+    normalized = (code or "").strip().upper()
+    return normalized.endswith(".TW") or normalized.endswith(".TWO")
+
+
 def _is_etf_code(code: str) -> bool:
     """判定 A 股 ETF 基金代码（保守规则）。"""
     normalized = normalize_stock_code(code)
@@ -156,11 +164,13 @@ def _is_etf_code(code: str) -> bool:
 
 
 def _market_tag(code: str) -> str:
-    """返回市场标签: cn/us/hk."""
+    """返回市场标签: cn/us/hk/tw."""
     if _is_us_market(code):
         return "us"
     if _is_hk_market(code):
         return "hk"
+    if _is_tw_market(code):
+        return "tw"
     return "cn"
 
 
@@ -446,7 +456,8 @@ class BaseFetcher(ABC):
         # 该行为目前保留（按需求不改逻辑）。
         avg_volume_5 = df['volume'].rolling(window=5, min_periods=1).mean()
         df['volume_ratio'] = df['volume'] / avg_volume_5.shift(1)
-        df['volume_ratio'] = df['volume_ratio'].fillna(1.0)
+        # replace inf (avg=0 after suspension) and NaN (first row after shift) with 1.0
+        df['volume_ratio'] = df['volume_ratio'].replace([np.inf, -np.inf], np.nan).fillna(1.0)
         
         # 保留2位小数
         for col in ['ma5', 'ma10', 'ma20', 'volume_ratio']:

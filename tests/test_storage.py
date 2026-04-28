@@ -131,7 +131,10 @@ class TestStorage(unittest.TestCase):
                     os.environ.pop(key, None)
                 else:
                     os.environ[key] = value
-            temp_dir.cleanup()
+            try:
+                temp_dir.cleanup()
+            except PermissionError:
+                pass
 
     def test_sqlite_write_transactions_begin_immediate(self):
         DatabaseManager.reset_instance()
@@ -209,7 +212,10 @@ class TestStorage(unittest.TestCase):
 
             self.assertEqual(total, 1)
         finally:
-            temp_dir.cleanup()
+            try:
+                temp_dir.cleanup()
+            except PermissionError:
+                pass
             DatabaseManager.reset_instance()
 
 if __name__ == '__main__':

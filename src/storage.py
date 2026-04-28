@@ -16,6 +16,7 @@ from contextlib import contextmanager
 import hashlib
 import json
 import logging
+import math
 import re
 import time
 from datetime import datetime, date, timedelta
@@ -819,6 +820,8 @@ class DatabaseManager:
 
     @staticmethod
     def _normalize_sql_value(value: Any) -> Any:
+        if isinstance(value, float) and math.isinf(value):
+            return None
         return None if pd.isna(value) else value
     
     def get_session(self) -> Session:
