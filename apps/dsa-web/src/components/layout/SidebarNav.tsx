@@ -28,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'chat', label: '问股', to: '/chat', icon: MessageSquareQuote, badge: 'completion' },
   { key: 'portfolio', label: '持仓', to: '/portfolio', icon: BriefcaseBusiness },
   { key: 'backtest', label: '回测', to: '/backtest', icon: BarChart3 },
-  { key: 'settings', label: '设置', to: '/settings', icon: Settings2 },
+  { key: 'settings', label: '系統設置 (Settings)', to: '/settings', icon: Settings2 },
 ];
 
 export const SidebarNav: React.FC<SidebarNavProps> = ({ collapsed = false, onNavigate }) => {
@@ -39,8 +39,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ collapsed = false, onNav
   return (
     <div className="flex h-full flex-col">
       <div className={cn('mb-4 flex items-center gap-2 px-1', collapsed ? 'justify-center' : '')}>
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-gradient text-[hsl(var(--primary-foreground))] shadow-[0_12px_28px_var(--nav-brand-shadow)]">
-          <BarChart3 className="h-5 w-5" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm overflow-hidden border border-border/50">
+          <img src="/logo.png" alt="DSA Logo" className="h-full w-full object-cover" />
         </div>
         {!collapsed ? (
           <p className="min-w-0 truncate text-sm font-semibold text-foreground">DSA</p>

@@ -168,8 +168,8 @@ const HomePage: React.FC = () => {
         {/* Header Section */}
         <div className="mb-12 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-gradient text-white shadow-glow-cyan">
-              <BarChart3 className="h-8 w-8" />
+            <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-xl overflow-hidden border-2 border-subtle">
+              <img src="/logo.png" alt="DSA Logo" className="h-full w-full object-cover" />
             </div>
           </div>
           <h1 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">DSA 智能選股分析</h1>
