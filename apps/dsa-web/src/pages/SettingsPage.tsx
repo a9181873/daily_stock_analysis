@@ -15,6 +15,7 @@ import {
   SettingsLoading,
   SettingsSectionCard,
 } from '../components/settings';
+import { SubscribersCard } from '../components/settings/SubscribersCard';
 import { WEB_BUILD_INFO } from '../utils/constants';
 import { getCategoryDescriptionZh } from '../utils/systemConfigI18n';
 import type { SystemConfigCategory } from '../types/systemConfig';
@@ -656,6 +657,7 @@ const SettingsPage: React.FC = () => {
             {activeCategory === 'system' && passwordChangeable ? (
               <ChangePasswordCard />
             ) : null}
+            {activeCategory === 'system' ? <SubscribersCard /> : null}
             {activeItems.length ? (
               <SettingsSectionCard
                 title="当前分类配置项"

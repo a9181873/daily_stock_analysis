@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ChatPage from './pages/ChatPage';
 import PortfolioPage from './pages/PortfolioPage';
+import SubscribePage from './pages/SubscribePage';
 import { ApiErrorAlert, Shell } from './components/common';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useAgentChatStore } from './stores/agentChatStore';
@@ -50,6 +51,9 @@ const AppContent: React.FC = () => {
     if (location.pathname === '/login') {
       return <LoginPage />;
     }
+    if (location.pathname === '/subscribe') {
+      return <SubscribePage />;
+    }
     const redirect = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/login?redirect=${redirect}`} replace />;
   }
@@ -69,6 +73,7 @@ const AppContent: React.FC = () => {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/subscribe" element={<SubscribePage />} />
     </Routes>
   );
 };

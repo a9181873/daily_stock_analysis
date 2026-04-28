@@ -625,16 +625,28 @@ class LLMUsage(Base):
     called_at = Column(DateTime, default=datetime.now, index=True)
 
 
+class EmailSubscription(Base):
+    """Email subscription for receiving analysis reports and market reviews."""
+
+    __tablename__ = 'email_subscriptions'
+
+    id = Column(String(36), primary_key=True)
+    email = Column(String(255), nullable=False, unique=True, index=True)
+    content_types = Column(Text, nullable=False, default='[]')  # JSON array: ["analysis","market_review"]
+    created_at = Column(DateTime, default=datetime.now, index=True)
+    active = Column(Boolean, nullable=False, default=True, index=True)
+
+
 class DatabaseManager:
     """
     数据库管理器 - 单例模式
-    
+
     职责：
     1. 管理数据库连接池
     2. 提供 Session 上下文管理
     3. 封装数据存取操作
     """
-    
+
     _instance: Optional['DatabaseManager'] = None
     _initialized: bool = False
     

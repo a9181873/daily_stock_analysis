@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- 新条目格式：- [类型] 描述（类型取值：新功能/改进/修复/文档/测试/chore）-->
 <!-- 每条独立一行追加到本段末尾，无需分类标题，合并时冲突最小 -->
+- [新功能] Email 訂閱功能：訪客可透過 `/subscribe` 頁面輸入訂閱密碼自助訂閱個股分析或大盤復盤報告，無需 admin 帳號
+- [新功能] 訂閱管理：Settings 頁面新增「訂閱管理」分區，admin 可查看訂閱者列表並刪除
+- [新功能] 新增 `SUBSCRIPTION_PASSWORD` 環境變數（預設 `8888`）用於控制訂閱入口密碼
+- [改進] 通知管道 Email 渠道自動將訂閱者合併至收件人，不影響現有 EMAIL_RECEIVERS 設定
 
 ## [3.14.1] - 2026-04-26
 

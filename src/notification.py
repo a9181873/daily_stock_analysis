@@ -1647,6 +1647,22 @@ class NotificationService(
                         receivers = self.get_all_email_receivers()
                     elif email_stock_codes and self._stock_email_groups:
                         receivers = self.get_receivers_for_stocks(email_stock_codes)
+                    # Merge subscriber emails into the receiver list
+                    sub_content_type = "market_review" if email_send_to_all else "analysis"
+                    try:
+                        from src.repositories.subscription_repo import SubscriptionRepository
+                        sub_emails = SubscriptionRepository().get_emails_for_content_type(sub_content_type)
+                    except Exception as _sub_err:
+                        logger.warning("Failed to fetch subscriber emails: %s", _sub_err)
+                        sub_emails = []
+                    if sub_emails:
+                        base = receivers if receivers is not None else list(self._email_config.get('receivers') or [])
+                        seen = set(base)
+                        for _e in sub_emails:
+                            if _e not in seen:
+                                seen.add(_e)
+                                base.append(_e)
+                        receivers = base if base else None
                     if use_image:
                         result = self._send_email_with_inline_image(
                             image_bytes, receivers=receivers
