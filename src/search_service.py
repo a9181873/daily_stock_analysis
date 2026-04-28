@@ -2082,6 +2082,244 @@ class SearXNGSearchProvider(BaseSearchProvider):
         )
 
 
+class DuckDuckGoSearchProvider(BaseSearchProvider):
+    """
+    DuckDuckGo 搜索引擎（免费，无需 API Key）
+
+    特点：
+    - 完全免费，无需注册或 API Key
+    - 聚合多来源（Bing、Yahoo 等）新闻
+    - 支持时间范围过滤（d/w/m/y）
+    """
+
+    def __init__(self):
+        super().__init__([], "DuckDuckGo")
+
+    @property
+    def is_available(self) -> bool:
+        return True
+
+    @staticmethod
+    def _time_limit(days: int) -> Optional[str]:
+        if days <= 1:
+            return "d"
+        if days <= 7:
+            return "w"
+        if days <= 30:
+            return "m"
+        return "y"
+
+    @staticmethod
+    def _extract_domain(url: str) -> str:
+        try:
+            parsed = urlparse(url)
+            return parsed.netloc.replace("www.", "") or "未知来源"
+        except Exception:
+            return "未知来源"
+
+    def _do_search(self, query: str, _api_key: str, max_results: int, days: int = 7) -> SearchResponse:
+        try:
+            from duckduckgo_search import DDGS
+        except ImportError:
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self.name,
+                success=False,
+                error_message="duckduckgo-search 未安装，请运行: pip install duckduckgo-search",
+            )
+        try:
+            timelimit = self._time_limit(days)
+            results: List[SearchResult] = []
+            with DDGS() as ddgs:
+                for r in ddgs.news(query, max_results=max_results * 2, timelimit=timelimit):
+                    pub_date = r.get("date")
+                    if pub_date:
+                        try:
+                            pub_date = datetime.fromisoformat(
+                                pub_date.replace("Z", "+00:00")
+                            ).strftime("%Y-%m-%d")
+                        except (ValueError, AttributeError):
+                            pass
+                    results.append(
+                        SearchResult(
+                            title=r.get("title", ""),
+                            snippet=r.get("body", "")[:500],
+                            url=r.get("url", ""),
+                            source=r.get("source") or self._extract_domain(r.get("url", "")),
+                            published_date=pub_date,
+                        )
+                    )
+                    if len(results) >= max_results:
+                        break
+            return SearchResponse(query=query, results=results, provider=self.name, success=True)
+        except Exception as e:
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self.name,
+                success=False,
+                error_message=str(e),
+            )
+
+    def search(self, query: str, max_results: int = 5, days: int = 7) -> SearchResponse:
+        start_time = time.time()
+        response = self._do_search(query, "", max_results, days)
+        response.search_time = time.time() - start_time
+        if response.success:
+            logger.info(
+                "[%s] 搜索 '%s' 成功，返回 %s 条结果，耗时 %.2fs",
+                self.name,
+                query,
+                len(response.results),
+                response.search_time,
+            )
+        else:
+            logger.warning("[%s] 搜索 '%s' 失败: %s", self.name, query, response.error_message)
+        return response
+
+
+class GoogleNewsRSSSearchProvider(BaseSearchProvider):
+    """
+    Google News RSS 搜索引擎（免费，无需 API Key）
+
+    特点：
+    - 完全免费，无需注册或 API Key
+    - 直接来自 Google 新闻聚合器
+    - 国际新闻覆盖广泛，适合港股/美股
+    - 自动根据查询语言选择区域（中文→繁中，其他→英文）
+    """
+
+    RSS_BASE_URL = "https://news.google.com/rss/search"
+    _CHINESE_RE = re.compile(r"[㐀-䶿一-鿿]")
+
+    def __init__(self):
+        super().__init__([], "GoogleNewsRSS")
+
+    @property
+    def is_available(self) -> bool:
+        return True
+
+    @staticmethod
+    def _extract_domain(url: str) -> str:
+        try:
+            parsed = urlparse(url)
+            return parsed.netloc.replace("www.", "") or "未知来源"
+        except Exception:
+            return "未知来源"
+
+    @staticmethod
+    def _rss_time_qualifier(days: int) -> str:
+        if days <= 1:
+            return "when:1d"
+        if days <= 7:
+            return "when:7d"
+        if days <= 30:
+            return "when:30d"
+        return ""
+
+    def _do_search(self, query: str, _api_key: str, max_results: int, days: int = 7) -> SearchResponse:
+        import xml.etree.ElementTree as ET
+
+        if self._CHINESE_RE.search(query):
+            hl, gl, ceid = "zh-TW", "TW", "TW:zh-Hant"
+        else:
+            hl, gl, ceid = "en-US", "US", "US:en"
+
+        time_qualifier = self._rss_time_qualifier(days)
+        full_query = f"{query} {time_qualifier}".strip() if time_qualifier else query
+
+        params: Dict[str, Any] = {"q": full_query, "hl": hl, "gl": gl, "ceid": ceid}
+        try:
+            resp = _get_with_retry(
+                self.RSS_BASE_URL,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; StockNewsBot/1.0)"},
+                params=params,
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                return SearchResponse(
+                    query=query,
+                    results=[],
+                    provider=self.name,
+                    success=False,
+                    error_message=f"HTTP {resp.status_code}",
+                )
+
+            root = ET.fromstring(resp.content)
+            channel = root.find("channel")
+            if channel is None:
+                return SearchResponse(query=query, results=[], provider=self.name, success=True)
+
+            results: List[SearchResult] = []
+            for item in channel.findall("item"):
+                title_el = item.find("title")
+                link_el = item.find("link")
+                desc_el = item.find("description")
+                pub_el = item.find("pubDate")
+
+                url = (link_el.text or "").strip() if link_el is not None else ""
+                if not url:
+                    continue
+
+                pub_date = None
+                if pub_el is not None and pub_el.text:
+                    try:
+                        pub_date = parsedate_to_datetime(pub_el.text).strftime("%Y-%m-%d")
+                    except Exception:
+                        pub_date = pub_el.text
+
+                desc_raw = (desc_el.text or "") if desc_el is not None else ""
+                desc_clean = re.sub(r"<[^>]+>", " ", desc_raw).strip()[:500]
+
+                results.append(
+                    SearchResult(
+                        title=(title_el.text or "").strip() if title_el is not None else "",
+                        snippet=desc_clean,
+                        url=url,
+                        source=self._extract_domain(url),
+                        published_date=pub_date,
+                    )
+                )
+                if len(results) >= max_results:
+                    break
+
+            return SearchResponse(query=query, results=results, provider=self.name, success=True)
+
+        except _SEARCH_TRANSIENT_EXCEPTIONS as e:
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self.name,
+                success=False,
+                error_message=f"网络请求失败: {e}",
+            )
+        except Exception as e:
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self.name,
+                success=False,
+                error_message=str(e),
+            )
+
+    def search(self, query: str, max_results: int = 5, days: int = 7) -> SearchResponse:
+        start_time = time.time()
+        response = self._do_search(query, "", max_results, days)
+        response.search_time = time.time() - start_time
+        if response.success:
+            logger.info(
+                "[%s] 搜索 '%s' 成功，返回 %s 条结果，耗时 %.2fs",
+                self.name,
+                query,
+                len(response.results),
+                response.search_time,
+            )
+        else:
+            logger.warning("[%s] 搜索 '%s' 失败: %s", self.name, query, response.error_message)
+        return response
+
+
 class SearchService:
     """
     搜索服务
@@ -2205,7 +2443,15 @@ class SearchService:
         if anspire_keys:
             self._providers.insert(0, AnspireSearchProvider(anspire_keys))
             logger.info(f"已配置 Anspire Search 搜索，共 {len(anspire_keys)} 个 API Key")
-            
+
+        # 8. DuckDuckGo（免费，无需 Key，聚合 Bing/Yahoo 新闻，兜底）
+        self._providers.append(DuckDuckGoSearchProvider())
+        logger.info("已启用 DuckDuckGo 搜索（免费兜底）")
+
+        # 9. Google News RSS（免费，无需 Key，Google 新闻聚合，最终兜底）
+        self._providers.append(GoogleNewsRSSSearchProvider())
+        logger.info("已启用 Google News RSS 搜索（免费兜底）")
+
         if not self._providers:
             logger.warning("未配置任何搜索能力，新闻搜索功能将不可用")
 
