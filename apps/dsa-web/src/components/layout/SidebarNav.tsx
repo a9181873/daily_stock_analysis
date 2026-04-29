@@ -12,6 +12,7 @@ import { ThemeToggle } from '../theme/ThemeToggle';
 type SidebarNavProps = {
   collapsed?: boolean;
   onNavigate?: () => void;
+  layoutIdPrefix?: string;
 };
 
 type NavItem = {
@@ -31,7 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'settings', label: '系統設置 (Settings)', to: '/settings', icon: Settings2 },
 ];
 
-export const SidebarNav: React.FC<SidebarNavProps> = ({ collapsed = false, onNavigate }) => {
+export const SidebarNav: React.FC<SidebarNavProps> = ({ collapsed = false, onNavigate, layoutIdPrefix = 'sidebar' }) => {
   const { authEnabled, logout } = useAuth();
   const completionBadge = useAgentChatStore((state) => state.completionBadge);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -70,7 +71,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ collapsed = false, onNav
               <>
                 {isActive && (
                   <motion.div 
-                    layoutId="activeIndicator"
+                    layoutId={`${layoutIdPrefix}-activeIndicator`}
                     className="absolute top-0 bottom-0 left-0 w-[var(--nav-indicator-width)] bg-[var(--nav-indicator-bg)] shadow-[0_0_10px_var(--nav-indicator-shadow)]"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

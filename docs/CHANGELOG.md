@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [新功能] 訂閱管理：Settings 頁面新增「訂閱管理」分區，admin 可查看訂閱者列表並刪除
 - [新功能] 新增 `SUBSCRIPTION_PASSWORD` 環境變數（預設 `8888`）用於控制訂閱入口密碼
 - [改進] 通知管道 Email 渠道自動將訂閱者合併至收件人，不影響現有 EMAIL_RECEIVERS 設定
+- [修復] 修正 `Shell.tsx` 桌面版導覽列缺失問題：為桌面版 `<aside>` 側邊欄加上 `z-40` 以防被內容區元件遮擋
+- [改進] 解決 `SidebarNav` 元件 Framer Motion `layoutId` 衝突：引入 `layoutIdPrefix` 區分桌面與行動版實例，防止活動指示器消失或動畫異常
 
 ## [3.14.1] - 2026-04-26
 
