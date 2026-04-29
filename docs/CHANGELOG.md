@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [改進] 通知管道 Email 渠道自動將訂閱者合併至收件人，不影響現有 EMAIL_RECEIVERS 設定
 - [修復] 修正 `Shell.tsx` 桌面版導覽列缺失問題：為桌面版 `<aside>` 側邊欄加上 `z-40` 以防被內容區元件遮擋
 - [改進] 解決 `SidebarNav` 元件 Framer Motion `layoutId` 衝突：引入 `layoutIdPrefix` 區分桌面與行動版實例，防止活動指示器消失或動畫異常
+- [改進] 首頁移除 Logo 圖片，標題區更加簡潔
+- [新功能] 首頁新增「投資風格」選擇器（積極/中性/保守/自訂），分析時將風格偏好注入 LLM 上下文，影響建議倉位與止損策略風格
 
 ## [3.14.1] - 2026-04-26
 

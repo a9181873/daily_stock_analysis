@@ -24,6 +24,7 @@ type SubmitAnalysisOptions = {
   selectionSource?: SelectionSource;
   notify?: boolean;
   forceRefresh?: boolean;
+  investmentStyle?: string;
 };
 
 let reportRequestSeq = 0;
@@ -31,10 +32,14 @@ let analyzeRequestSeq = 0;
 let historyRequestSeq = 0;
 const dismissedTaskIds = new Set<string>();
 
+export type InvestmentStyleKey = 'neutral' | 'aggressive' | 'conservative' | 'custom';
+
 export interface StockPoolState {
   query: string;
   selectionSource: SelectionSource;
   notify: boolean;
+  investmentStyle: InvestmentStyleKey;
+  customStyleText: string;
   inputError?: string;
   duplicateError: string | null;
   error: ParsedApiError | null;
@@ -64,6 +69,8 @@ export interface StockPoolState {
   deleteSelectedHistory: () => Promise<void>;
   submitAnalysis: (options?: SubmitAnalysisOptions) => Promise<void>;
   setNotify: (notify: boolean) => void;
+  setInvestmentStyle: (style: InvestmentStyleKey) => void;
+  setCustomStyleText: (text: string) => void;
   syncTaskCreated: (task: TaskInfo) => void;
   syncTaskUpdated: (task: TaskInfo) => void;
   syncTaskFailed: (task: TaskInfo) => void;
@@ -75,6 +82,8 @@ const initialState = {
   query: '',
   selectionSource: 'manual' as SelectionSource,
   notify: true,
+  investmentStyle: 'neutral' as InvestmentStyleKey,
+  customStyleText: '',
   inputError: undefined,
   duplicateError: null,
   error: null,
@@ -192,6 +201,10 @@ export const useStockPoolStore = create<StockPoolState>((set, get) => ({
 
   setNotify: (notify) => set({ notify }),
 
+  setInvestmentStyle: (style) => set({ investmentStyle: style }),
+
+  setCustomStyleText: (text) => set({ customStyleText: text }),
+
   openMarkdownDrawer: () => set({ markdownDrawerOpen: true }),
 
   closeMarkdownDrawer: () => set({ markdownDrawerOpen: false }),
@@ -307,9 +320,21 @@ export const useStockPoolStore = create<StockPoolState>((set, get) => ({
     const stockCodeInput = rawStockCode.trim();
     const stockName = options?.stockName;
     const selectionSource = options?.selectionSource ?? state.selectionSource;
-    const originalQuery = (options?.originalQuery ?? state.query).trim();
+    const rawOriginalQuery = (options?.originalQuery ?? state.query).trim();
     const notify = options?.notify ?? state.notify;
     const forceRefresh = options?.forceRefresh ?? false;
+
+    // Inject investment style hint into originalQuery for LLM context
+    const styleKey = options?.investmentStyle ?? state.investmentStyle;
+    let styleHint = '';
+    if (styleKey === 'aggressive') {
+      styleHint = '[投資風格:積極 — 放寬乖離率容忍、優先追趨勢、建議倉位偏高]';
+    } else if (styleKey === 'conservative') {
+      styleHint = '[投資風格:保守 — 嚴格止損、低倉位、回踩確認後再進場]';
+    } else if (styleKey === 'custom' && state.customStyleText.trim()) {
+      styleHint = `[投資風格:${state.customStyleText.trim()}]`;
+    }
+    const originalQuery = styleHint ? `${styleHint} ${rawOriginalQuery}` : rawOriginalQuery;
 
     if (!stockCodeInput) {
       set({ inputError: '请输入股票代码', duplicateError: null });

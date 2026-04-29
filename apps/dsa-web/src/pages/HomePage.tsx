@@ -9,9 +9,10 @@ import { ReportMarkdown, ReportSummary } from '../components/report';
 import { TaskPanel } from '../components/tasks';
 import { useDashboardLifecycle, useHomeDashboardState } from '../hooks';
 import { normalizeReportLanguage } from '../utils/reportLanguage';
-import { BarChart3, ShieldCheck, Zap, Bell } from 'lucide-react';
+import { BarChart3, Flame, ShieldCheck, SlidersHorizontal, Zap, Bell, Shield } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { Drawer } from '../components/common/Drawer';
+import type { InvestmentStyleKey } from '../stores/stockPoolStore';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,6 +47,10 @@ const HomePage: React.FC = () => {
     submitAnalysis,
     notify,
     setNotify,
+    investmentStyle,
+    customStyleText,
+    setInvestmentStyle,
+    setCustomStyleText,
     syncTaskCreated,
     syncTaskUpdated,
     syncTaskFailed,
@@ -167,11 +172,6 @@ const HomePage: React.FC = () => {
       <div className="mx-auto flex w-full max-w-4xl flex-col px-4 py-8 sm:px-6 lg:py-12">
         {/* Header Section */}
         <div className="mb-12 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-xl overflow-hidden border-2 border-subtle">
-              <img src="/logo.png" alt="DSA Logo" className="h-full w-full object-cover" />
-            </div>
-          </div>
           <h1 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">DSA 智能選股分析</h1>
           <p className="text-muted-text">基於 AI 大模型的全球市場智能分析系統</p>
         </div>
@@ -225,15 +225,17 @@ const HomePage: React.FC = () => {
             />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-secondary-text transition-colors hover:text-foreground">
-              <input
-                type="checkbox"
-                checked={notify}
-                onChange={(e) => setNotify(e.target.checked)}
-                className="h-4 w-4 rounded border-border bg-transparent accent-cyan"
-              />
-              同步推送通知
-            </label>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-secondary-text transition-colors hover:text-foreground">
+                <input
+                  type="checkbox"
+                  checked={notify}
+                  onChange={(e) => setNotify(e.target.checked)}
+                  className="h-4 w-4 rounded border-border bg-transparent accent-cyan"
+                />
+                同步推送通知
+              </label>
+            </div>
             <Button
               type="button"
               onClick={() => handleSubmitAnalysis()}
@@ -249,6 +251,44 @@ const HomePage: React.FC = () => {
                 '開始分析'
               )}
             </Button>
+          </div>
+
+          {/* Investment Style Selector */}
+          <div className="mt-4 rounded-xl border border-border/60 bg-card/30 p-4 backdrop-blur-sm">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-text">投資風格</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {([
+                { key: 'aggressive' as InvestmentStyleKey, label: '積極', icon: Flame, desc: '追趨勢・高倉位', color: 'text-orange-500' },
+                { key: 'neutral' as InvestmentStyleKey, label: '中性', icon: SlidersHorizontal, desc: '平衡風險收益', color: 'text-cyan' },
+                { key: 'conservative' as InvestmentStyleKey, label: '保守', icon: Shield, desc: '嚴格止損・低倉位', color: 'text-emerald-500' },
+                { key: 'custom' as InvestmentStyleKey, label: '自訂', icon: SlidersHorizontal, desc: '自定義風格', color: 'text-purple' },
+              ]).map(({ key, label, icon: Icon, desc, color }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setInvestmentStyle(key)}
+                  className={cn(
+                    'flex flex-col items-center gap-1 rounded-xl border px-3 py-3 text-sm transition-all',
+                    investmentStyle === key
+                      ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.08)] text-foreground shadow-sm'
+                      : 'border-transparent text-secondary-text hover:bg-hover hover:text-foreground'
+                  )}
+                >
+                  <Icon className={cn('h-5 w-5', investmentStyle === key ? color : 'text-current')} />
+                  <span className="font-medium">{label}</span>
+                  <span className="text-[10px] leading-tight text-muted-text">{desc}</span>
+                </button>
+              ))}
+            </div>
+            {investmentStyle === 'custom' && (
+              <input
+                type="text"
+                value={customStyleText}
+                onChange={(e) => setCustomStyleText(e.target.value)}
+                placeholder="輸入自定義投資風格描述，如：短線波段、價值投資、左側抄底..."
+                className="mt-3 h-10 w-full rounded-lg border border-border/70 bg-background/60 px-3 text-sm text-foreground placeholder:text-muted-text focus:border-[hsl(var(--primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.3)]"
+              />
+            )}
           </div>
           
           {inputError || duplicateError ? (
