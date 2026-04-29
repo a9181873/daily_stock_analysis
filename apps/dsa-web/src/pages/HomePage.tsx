@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ApiErrorAlert, ConfirmDialog, Button, InlineAlert, Card } from '../components/common';
+import { ApiErrorAlert, ConfirmDialog, Button, InlineAlert } from '../components/common';
 import { DashboardStateBlock } from '../components/dashboard';
 import { StockAutocomplete } from '../components/StockAutocomplete';
 import { HistoryList } from '../components/history';
@@ -177,34 +177,19 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* User Guide Section */}
-        <div className="mb-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="border-subtle bg-card/40 p-5 backdrop-blur-md">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-cyan/10 text-cyan">
-              <Zap className="h-5 w-5" />
-            </div>
-            <h3 className="mb-1 font-semibold">快速分析</h3>
-            <p className="text-xs leading-relaxed text-muted-text">
-              輸入股票代碼或名稱，AI 將即時聚合技術面、基本面與新聞輿情進行深度診斷。
-            </p>
-          </Card>
-          <Card className="border-subtle bg-card/40 p-5 backdrop-blur-md">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-purple/10 text-purple">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <h3 className="mb-1 font-semibold">決策儀表盤</h3>
-            <p className="text-xs leading-relaxed text-muted-text">
-              提供直觀的評分、買賣點位建議及風險警報，助您快速掌握市場情緒與趨勢。
-            </p>
-          </Card>
-          <Card className="border-subtle bg-card/40 p-5 backdrop-blur-md">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-success">
-              <Bell className="h-5 w-5" />
-            </div>
-            <h3 className="mb-1 font-semibold">多渠道推送</h3>
-            <p className="text-xs leading-relaxed text-muted-text">
-              支援企業微信、飛書、Telegram 等多種渠道，每日定時將分析結果送達您的手中。
-            </p>
-          </Card>
+        <div className="mb-10 flex flex-wrap justify-center gap-6 text-sm text-muted-text/70">
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-cyan/70" />
+            <span>快速分析</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-purple/70" />
+            <span>決策儀表盤</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Bell className="h-4 w-4 text-success/70" />
+            <span>多渠道推送</span>
+          </div>
         </div>
 
         {/* Analysis Input Section */}

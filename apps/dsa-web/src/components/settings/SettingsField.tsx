@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import type React from 'react';
-import { Badge, Button, Select, Input, Tooltip } from '../common';
+import { Badge, Button, Select, Input, Tooltip, HelpDialog } from '../common';
 import type { ConfigValidationIssue, SystemConfigFieldSchema, SystemConfigItem } from '../../types/systemConfig';
-import { getFieldDescriptionZh, getFieldTitleZh } from '../../utils/systemConfigI18n';
+import { getFieldDescriptionZh, getFieldTitleZh, getFieldDetailedDescriptionZh } from '../../utils/systemConfigI18n';
 import { cn } from '../../utils/cn';
+import { Info } from 'lucide-react';
 
 function normalizeSelectOptions(options: SystemConfigFieldSchema['options'] = []) {
   return options.map((option) => {
@@ -79,7 +80,7 @@ function renderFieldControl(
           onChange={onChange}
           options={normalizeSelectOptions(schema.options)}
           disabled={disabled || !schema.isEditable}
-          placeholder="请选择"
+          placeholder="請選擇"
         />
       );
   }
@@ -95,7 +96,7 @@ function renderFieldControl(
           disabled={disabled || !schema?.isEditable}
           onChange={(event) => onChange(event.target.checked ? 'true' : 'false')}
         />
-        <span className="text-sm text-secondary-text">{checked ? '已启用' : '未启用'}</span>
+        <span className="text-sm text-secondary-text">{checked ? '已啟用' : '未啟用'}</span>
       </label>
     );
   }
@@ -138,7 +139,7 @@ function renderFieldControl(
                   onChange(serializeMultiValues(nextValues.length ? nextValues : ['']));
                 }}
               >
-                删除
+                刪除
               </Button>
             </div>
           ))}
@@ -152,7 +153,7 @@ function renderFieldControl(
               disabled={disabled || !schema?.isEditable}
               onClick={() => onChange(serializeMultiValues([...values, '']))}
             >
-              添加 Key
+              新增 Key
             </Button>
           </div>
         </div>
@@ -199,8 +200,10 @@ export const SettingsField: React.FC<SettingsFieldProps> = ({
   const isMultiValue = isMultiValueField(item);
   const title = getFieldTitleZh(item.key, item.key);
   const description = getFieldDescriptionZh(item.key, schema?.description);
+  const detailedDescription = getFieldDetailedDescriptionZh(item.key);
   const hasError = issues.some((issue) => issue.severity === 'error');
   const [isPasswordEditable, setIsPasswordEditable] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const controlId = `setting-${item.key}`;
 
   return (
@@ -211,19 +214,31 @@ export const SettingsField: React.FC<SettingsFieldProps> = ({
         'hover:bg-[var(--settings-surface-hover)]',
       )}
     >
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <label className="text-sm font-semibold text-foreground" htmlFor={controlId}>
-          {title}
-        </label>
-        {schema?.isSensitive ? (
-          <Badge variant="history" size="sm">
-            敏感
-          </Badge>
-        ) : null}
-        {!schema?.isEditable ? (
-          <Badge variant="default" size="sm">
-            只读
-          </Badge>
+      <div className="mb-2 flex flex-wrap items-center justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-sm font-semibold text-foreground" htmlFor={controlId}>
+            {title}
+          </label>
+          {schema?.isSensitive ? (
+            <Badge variant="history" size="sm">
+              敏感
+            </Badge>
+          ) : null}
+          {!schema?.isEditable ? (
+            <Badge variant="default" size="sm">
+              唯讀
+            </Badge>
+          ) : null}
+        </div>
+        {detailedDescription ? (
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium text-cyan hover:bg-cyan/10 transition-colors"
+            onClick={() => setIsHelpOpen(true)}
+          >
+            <Info className="h-3.5 w-3.5" />
+            詳細說明
+          </button>
         ) : null}
       </div>
 
@@ -249,8 +264,8 @@ export const SettingsField: React.FC<SettingsFieldProps> = ({
 
       {schema?.isSensitive ? (
         <p className="mt-3 text-[11px] leading-5 text-secondary-text">
-          敏感内容默认隐藏，可点击眼睛图标查看明文。
-          {isMultiValue ? ' 支持添加多个输入框进行增删。' : ''}
+          敏感內容預設隱藏，可點擊眼睛圖示查看明文。
+          {isMultiValue ? ' 支援新增多個輸入框進行增刪。' : ''}
         </p>
       ) : null}
 
@@ -266,6 +281,15 @@ export const SettingsField: React.FC<SettingsFieldProps> = ({
           ))}
         </div>
       ) : null}
+
+      {detailedDescription && (
+        <HelpDialog
+          isOpen={isHelpOpen}
+          title={title}
+          content={detailedDescription}
+          onClose={() => setIsHelpOpen(false)}
+        />
+      )}
     </div>
   );
 };
