@@ -1,6 +1,6 @@
 # OCI One-Click Deploy (PowerShell)
 $IP = "144.24.11.149"
-$USER = "opc"
+$USER = "ubuntu"
 $REMOTE_PATH = "~/daily_stock_analysis"
 
 Write-Host "Starting deployment to OCI ($IP)..." -ForegroundColor Cyan
