@@ -49,21 +49,26 @@ bot/
 ├── __init__.py             # 模块入口，导出主要类
 ├── models.py               # 统一的消息/响应模型
 ├── dispatcher.py           # 命令分发器（核心）
+├── handler.py              # 各平台 Webhook 处理函数
 ├── commands/               # 命令处理器
 │   ├── __init__.py
 │   ├── base.py             # 命令抽象基类
 │   ├── analyze.py          # /analyze 股票分析
+│   ├── ask.py              # /ask Agent 技能分析
+│   ├── batch.py            # /batch 批量分析自选股
+│   ├── chat.py             # /chat 多轮策略对话
+│   ├── history.py          # /history 查看 Agent 对话历史
 │   ├── market.py           # /market 大盘复盘
+│   ├── research.py         # /research 深度研究
+│   ├── strategies.py       # /strategies 查看可用交易策略
 │   ├── help.py             # /help 帮助信息
 │   └── status.py           # /status 系统状态
 └── platforms/              # 平台适配器
     ├── __init__.py
     ├── base.py             # 平台抽象基类
-    ├── feishu.py           # 飞书机器人
     ├── dingtalk.py         # 钉钉机器人
-    ├── dingtalk_stream.py  # 钉钉机器人Stream
-    ├── wecom.py            # 企业微信机器人 （开发中）
-    └── telegram.py         # Telegram 机器人 （开发中）
+    ├── dingtalk_stream.py  # 钉钉 Stream 机器人
+    └── feishu_stream.py    # 飞书 Stream 机器人
 ```
 
 ## 三、核心抽象设计
@@ -182,30 +187,30 @@ class CommandDispatcher:
 ## 四、已支持的命令
 
 | 命令 | 别名 | 说明 | 示例 |
-
 |------|------|------|------|
+| `/analyze` | `/a`, `分析` | 分析指定股票 | `/analyze 600519` |
+| `/ask` | `问股` | 使用 Agent 技能分析一只或多只股票 | `/ask 600519 chan_theory` |
+| `/batch` | `/b`, `批量` | 批量分析自选股列表 | `/batch` |
+| `/chat` | `/c`, `问` | 与 AI 多轮策略对话（保留上下文） | `/chat 茅台今天能买吗` |
+| `/history` | `历史`, `会话` | 查看或清除 Agent 对话历史（按用户隔离） | `/history` 或 `/history clear` |
+| `/market` | `/m`, `大盘` | 大盘复盘（A 股 / 美股） | `/market` |
+| `/research` | `深研`, `deepsearch` | 深度研究指定股票或市场话题 | `/research 600519 近期业绩风险` |
+| `/strategies` | `skills`, `策略` | 查看可用交易策略及激活状态 | `/strategies` 或 `/strategies active` |
+| `/help` | `/h`, `帮助` | 显示帮助信息 | `/help` |
+| `/status` | `/s`, `状态` | 系统状态 | `/status` |
 
-| /analyze | /a, 分析 | 分析指定股票 | `/analyze 600519` |
-
-| /market | /m, 大盘 | 大盘复盘 | `/market` |
-
-| /batch | /b, 批量 | 批量分析自选股 | `/batch` |
-
-| /help | /h, 帮助 | 显示帮助信息 | `/help` |
-
-| /status | /s, 状态 | 系统状态 | `/status` |
+> **股票代码格式**：A 股用 6 位代码（如 `600519`）；港股加 `hk` 前缀（如 `hk00700`）；美股使用 Ticker（如 `AAPL`、`TSLA`）。
 
 ## 五、Webhook 路由
 
-在 [api/v1/router.py](../api/v1/router.py) 中注册路由：
+各平台处理函数在 `bot/handler.py` 中定义，需在 FastAPI 应用中手动挂载（建议在 `api/app.py` 而非 `api/v1/router.py`，保持路径为 `/bot/<platform>` 而非 `/api/v1/bot/<platform>`）：
 
-```python
-# Webhook 路由
-/bot/feishu      # POST - 飞书事件回调
-/bot/dingtalk    # POST - 钉钉事件回调
-/bot/wecom       # POST - 企业微信事件回调 （开发中）
-/bot/telegram    # POST - Telegram 更新回调 （开发中）
-```
+| 路由 | 方法 | 状态 | 说明 |
+|------|------|------|------|
+| `/bot/dingtalk` | POST | **已就绪** | `DingtalkPlatform` 已注册于 `ALL_PLATFORMS` |
+| `/bot/feishu` | POST | Stream 模式 | 使用 `feishu_stream.py`，Webhook 适配器未纳入 `ALL_PLATFORMS` |
+| `/bot/wecom` | POST | 未实现 | Handler 存在但无平台适配器 |
+| `/bot/telegram` | POST | 未实现 | Handler 存在但无平台适配器 |
 
 ## 配置
 

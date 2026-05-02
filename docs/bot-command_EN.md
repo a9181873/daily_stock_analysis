@@ -58,10 +58,13 @@ bot/
 │   ├── __init__.py
 │   ├── base.py             # Abstract base class for commands
 │   ├── analyze.py          # /analyze — stock analysis
-│   ├── ask.py              # /ask — single-turn question
+│   ├── ask.py              # /ask — agent skill analysis
 │   ├── batch.py            # /batch — batch watchlist analysis
 │   ├── chat.py             # /chat — multi-turn strategy chat
+│   ├── history.py          # /history — view agent conversation history
 │   ├── market.py           # /market — market review
+│   ├── research.py         # /research — deep research on a stock or topic
+│   ├── strategies.py       # /strategies — list available trading strategies
 │   ├── help.py             # /help — help text
 │   └── status.py           # /status — system status
 └── platforms/              # Platform adapters
@@ -150,15 +153,18 @@ class BotCommand(ABC):
 
 ## 4. Supported Commands
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `/analyze` | Analyze a specific stock | `/analyze AAPL` or `/analyze 600519` |
-| `/ask` | Single-turn question about a stock or the market | `/ask what is RSI for AAPL` |
-| `/batch` | Batch-analyze your configured watchlist | `/batch` |
-| `/chat` | Multi-turn strategy chat (maintains conversation context) | `/chat` |
-| `/market` | Market review (A-shares / US stocks) | `/market` |
-| `/help` | Show help text | `/help` |
-| `/status` | Show system status | `/status` |
+| Command | Aliases | Description | Example |
+|---------|---------|-------------|---------|
+| `/analyze` | `/a`, `分析` | Analyze a specific stock | `/analyze AAPL` or `/analyze 600519` |
+| `/ask` | `问股` | Invoke an Agent skill to analyze one or more stocks | `/ask 600519 chan_theory` |
+| `/batch` | `/b`, `批量` | Batch-analyze your configured watchlist | `/batch` |
+| `/chat` | `/c`, `问` | Multi-turn strategy chat (maintains conversation context) | `/chat` |
+| `/history` | `历史`, `会话` | View or clear your recent Agent conversation sessions | `/history` or `/history clear` |
+| `/market` | `/m`, `大盘` | Market review (A-shares / US stocks) | `/market` |
+| `/research` | `深研`, `deepsearch` | Deep research on a stock or market topic | `/research 600519 近期业绩风险` |
+| `/strategies` | `skills`, `策略` | List all available trading strategies and their activation status | `/strategies` or `/strategies active` |
+| `/help` | `/h`, `帮助` | Show help text | `/help` |
+| `/status` | `/s`, `状态` | Show system status | `/status` |
 
 > **Stock code formats:** A-shares use 6-digit codes (e.g. `600519`); HK stocks prefix `hk` (e.g. `hk00700`); US stocks use ticker symbols (e.g. `AAPL`, `TSLA`).
 
