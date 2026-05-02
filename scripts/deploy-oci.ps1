@@ -4,7 +4,7 @@ $USER = "ubuntu"
 $REMOTE_PATH = "~/daily_stock_analysis"
 
 Write-Host "Starting deployment to OCI ($IP)..." -ForegroundColor Cyan
-$remoteCmd = "cd $REMOTE_PATH && git pull origin main && docker-compose -f ./docker/docker-compose.yml up -d --build"
+$remoteCmd = "cd $REMOTE_PATH && git pull origin main && docker compose -f ./docker/docker-compose.yml up -d --build"
 
 ssh -i "$HOME\.ssh\new_oci.key" -o ConnectTimeout=10 "${USER}@${IP}" "$remoteCmd"
 
